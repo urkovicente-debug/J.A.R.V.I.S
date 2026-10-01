@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. AI System - Stark Industries</title>
+    <title>J.A.R.V.I.S. IA - Google Gemini</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: #030a16;
             color: #00f0ff;
@@ -22,7 +17,6 @@
             min-height: 100vh;
             overflow: hidden;
         }
-
         .hud-container {
             display: flex;
             flex-direction: column;
@@ -30,38 +24,6 @@
             justify-content: center;
             z-index: 10;
         }
-
-        /* Configuración de API Key */
-        .api-container {
-            position: absolute;
-            top: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 20;
-        }
-
-        .api-input {
-            background: rgba(0, 15, 30, 0.8);
-            border: 1px solid #00f0ff;
-            color: #00f0ff;
-            padding: 8px 12px;
-            border-radius: 4px;
-            outline: none;
-            font-size: 0.85rem;
-            width: 250px;
-        }
-
-        .api-button {
-            background: #00f0ff;
-            color: #030a16;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* Núcleo Reactivo de Jarvis */
         .arc-reactor {
             position: relative;
             width: 180px;
@@ -75,20 +37,16 @@
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
-            margin-top: 40px;
         }
-
         .arc-reactor:hover {
             transform: scale(1.05);
             box-shadow: 0 0 60px #00f0ff, inset 0 0 60px #00f0ff;
         }
-
         .arc-reactor.escuchando {
             border-color: #ff3366;
             box-shadow: 0 0 60px #ff3366, inset 0 0 60px #ff3366;
             animation: pulso 1.5s infinite;
         }
-
         .arc-text {
             font-weight: bold;
             font-size: 1.2rem;
@@ -96,14 +54,11 @@
             color: #ffffff;
             text-shadow: 0 0 10px #00f0ff;
         }
-
         @keyframes pulso {
             0% { transform: scale(1); }
             50% { transform: scale(1.08); }
             100% { transform: scale(1); }
         }
-
-        /* Textos de Estado */
         .status {
             margin-top: 30px;
             font-size: 1.1rem;
@@ -112,7 +67,6 @@
             text-align: center;
             min-height: 30px;
         }
-
         .console-box {
             margin-top: 20px;
             width: 90%;
@@ -127,62 +81,105 @@
             line-height: 1.5;
             min-height: 60px;
         }
+        .api-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .api-input {
+            flex: 1;
+            padding: 8px;
+            background: rgba(0, 15, 30, 0.8);
+            border: 1px solid #00f0ff;
+            color: #00f0ff;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .btn-guardar {
+            padding: 8px 15px;
+            background: #00f0ff;
+            color: #030a16;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-guardar:hover {
+            background: #ffffff;
+        }
     </style>
 </head>
 <body>
-
-    <div class="api-container">
-        <input type="password" id="apiKeyInput" class="api-input" placeholder="Pega tu Gemini API Key aquí">
-        <button class="api-button" onclick="guardarApiKey()">Guardar Clave</button>
-    </div>
 
     <div class="hud-container">
         <div class="arc-reactor" id="reactor" onclick="iniciarEscucha()">
             <span class="arc-text">JARVIS</span>
         </div>
 
-        <div class="status" id="estado">Haga clic en el núcleo para hablar</div>
-        <div class="console-box" id="consola">Esperando clave de API de Gemini o comando...</div>
+        <div class="status" id="estado">Comprobando clave de API...</div>
+        
+        <div class="api-container">
+            <input type="password" id="apiKey" class="api-input" placeholder="Pega tu API Key de Gemini aquí">
+            <button class="btn-guardar" onclick="guardarClave()">Guardar</button>
+        </div>
+
+        <div class="console-box" id="consola">Cargando Jarvis...</div>
     </div>
 
     <script>
         const estado = document.getElementById('estado');
         const consola = document.getElementById('consola');
         const reactor = document.getElementById('reactor');
-        const apiKeyInput = document.getElementById('apiKeyInput');
+        const apiKeyInput = document.getElementById('apiKey');
 
-        // Cargar clave guardada
-        let geminiApiKey = localStorage.getItem('GEMINI_API_KEY') || '';
-        if (geminiApiKey) {
-            apiKeyInput.value = geminiApiKey;
-            consola.innerText = "Sistemas listos. Conexión con IA establecida.";
-        } else {
-            consola.innerText = "Por favor, ingresa tu API Key de Gemini en la parte superior para conectar la IA.";
+        // Al cargar la página, comprobar si la API Key ya está guardada en la memoria del navegador
+        window.onload = () => {
+            const claveGuardada = localStorage.getItem('jarvis_gemini_key');
+            if (claveGuardada) {
+                apiKeyInput.value = claveGuardada;
+                estado.innerText = "Sistemas listos. Toca el núcleo para hablar";
+                consola.innerText = "Clave de API cargada automáticamente.";
+            } else {
+                estado.innerText = "Introduce tu API Key y pulsa Guardar";
+                consola.innerText = "Esperando que configures la API Key de Gemini.";
+            }
+        };
+
+        function guardarClave() {
+            const clave = apiKeyInput.value.trim();
+            if (clave) {
+                localStorage.setItem('jarvis_gemini_key', clave);
+                estado.innerText = "¡Clave guardada con éxito!";
+                consola.innerText = "La clave de API ha quedado guardada en este navegador.";
+            } else {
+                alert("Por favor, introduce una clave válida.");
+            }
         }
 
-        function guardarApiKey() {
-            geminiApiKey = apiKeyInput.value.trim();
-            localStorage.setItem('GEMINI_API_KEY', geminiApiKey);
-            alert("Clave API guardada correctamente.");
-            consola.innerText = "Sistemas listos. Conexión con IA establecida.";
-        }
-
-        // Configuración del Reconocimiento de Voz
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Recognition) {
+            estado.innerText = "Navegador no compatible";
+            consola.innerText = "Usa Google Chrome para esta aplicación.";
+        }
+
         const recognizer = new Recognition();
         recognizer.lang = 'es-ES';
-        recognizer.continuous = false;
 
         function iniciarEscucha() {
-            if (!geminiApiKey) {
-                alert("Primero ingresa y guarda tu API Key de Gemini en la parte superior.");
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                estado.innerText = "Falta la API Key";
+                consola.innerText = "Guarda tu API Key antes de comenzar a hablar.";
                 return;
             }
+
             try {
                 recognizer.start();
                 reactor.classList.add('escuchando');
                 estado.innerText = "Escuchando...";
-                consola.innerText = "Hable ahora, señor...";
+                consola.innerText = "Escuchando comando...";
             } catch (e) {
                 console.log(e);
             }
@@ -192,51 +189,51 @@
             reactor.classList.remove('escuchando');
             const texto = event.results[0][0].transcript;
             consola.innerText = 'Tú: "' + texto + '"';
-            estado.innerText = "Pensando (Consultando a la IA)...";
+            estado.innerText = "Pensando (Gemini)...";
 
-            // Consultar a Gemini API
             await consultarGemini(texto);
         };
 
         recognizer.onerror = () => {
             reactor.classList.remove('escuchando');
-            estado.innerText = "Error al escuchar";
+            estado.innerText = "Error de escucha";
         };
 
-        // Función para conectar con la API de Gemini
-        async function consultarGemini(pregunta) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+        recognizer.onend = () => {
+            reactor.classList.remove('escuchando');
+        };
 
-            const promptSistema = `Eres J.A.R.V.I.S., el asistente de inteligencia artificial de Iron Man. Responde de forma muy breve (máximo 2 o 3 frases cortos), educada, formal, llamándome 'señor', y manteniendo siempre el personaje de una IA futurista de alta tecnología. Pregunta del usuario: ${pregunta}`;
+        async function consultarGemini(mensaje) {
+            const apiKey = apiKeyInput.value.trim();
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+            const prompt = `Eres J.A.R.V.I.S., la inteligencia artificial de Tony Stark. Responde de manera breve, educada y concisa (máximo 2 o 3 frases) como lo haría Jarvis en español. Pregunta del usuario: ${mensaje}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: promptSistema }]
-                        }]
+                        contents: [{ parts: [{ text: prompt }] }]
                     })
                 });
 
                 const data = await response.json();
-                
+
                 if (data.candidates && data.candidates[0].content.parts[0].text) {
                     const respuesta = data.candidates[0].content.parts[0].text;
                     consola.innerText = "Jarvis: " + respuesta;
                     hablar(respuesta);
                 } else {
-                    estado.innerText = "Error en la respuesta";
-                    consola.innerText = "Error en el formato de respuesta de la API.";
+                    estado.innerText = "Error en la clave de API";
+                    consola.innerText = "No se pudo obtener respuesta. Verifica que la API Key sea correcta.";
                 }
             } catch (error) {
                 estado.innerText = "Error de conexión";
-                consola.innerText = "Hubo un error al conectar con Gemini. Revisa tu clave API.";
+                consola.innerText = "Ocurrió un error al conectar con los servidores de Google.";
             }
         }
 
-        // Síntesis de Voz
         function hablar(texto) {
             estado.innerText = "Respondiendo...";
             window.speechSynthesis.cancel();
@@ -246,7 +243,7 @@
             utterance.rate = 1.0;
 
             utterance.onend = () => {
-                estado.innerText = "Haga clic en el núcleo para hablar";
+                estado.innerText = "Toca el núcleo para hablar";
             };
 
             window.speechSynthesis.speak(utterance);
