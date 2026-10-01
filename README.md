@@ -204,36 +204,43 @@
         };
 
         async function consultarGemini(mensaje) {
-            const apiKey = apiKeyInput.value.trim();
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const apiKey = apiKeyInput.value.trim();
+    
+    // URL oficial y correcta para Gemini 1.5 Flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-            const prompt = `Eres J.A.R.V.I.S., la inteligencia artificial de Tony Stark. Responde de manera breve, educada y concisa (máximo 2 o 3 frases) como lo haría Jarvis en español. Pregunta del usuario: ${mensaje}`;
+    const prompt = `Eres J.A.R.V.I.S., la inteligencia artificial de Tony Stark. Responde de manera breve, educada y concisa (máximo 2 o 3 frases) como lo haría Jarvis en español. Pregunta del usuario: ${mensaje}`;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
-                });
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
 
-                const data = await response.json();
-
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    const respuesta = data.candidates[0].content.parts[0].text;
-                    consola.innerText = "Jarvis: " + respuesta;
-                    hablar(respuesta);
-                } else {
-                    estado.innerText = "Error en la clave de API";
-                    consola.innerText = "No se pudo obtener respuesta. Verifica que la API Key sea correcta.";
-                }
-            } catch (error) {
-                estado.innerText = "Error de conexión";
-                consola.innerText = "Ocurrió un error al conectar con los servidores de Google.";
-            }
+        if (!response.ok) {
+            // Esto mostrará en la consola si hay un error HTTP específico
+            throw new Error(`Error HTTP: ${response.status}`);
         }
 
+        const data = await response.json();
+
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const respuesta = data.candidates[0].content.parts[0].text;
+            consola.innerText = "Jarvis: " + respuesta;
+            hablar(respuesta);
+        } else {
+            estado.innerText = "Error en la clave o datos";
+            consola.innerText = "No se obtuvo respuesta estructurada.";
+        }
+    } catch (error) {
+        console.error("Error en la llamada:", error);
+        estado.innerText = "Error " + error.message;
+        consola.innerText = "Revisa que tu API Key sea de Google AI Studio y no de Google Cloud Platform.";
+    }
+}
         function hablar(texto) {
             estado.innerText = "Respondiendo...";
             window.speechSynthesis.cancel();
