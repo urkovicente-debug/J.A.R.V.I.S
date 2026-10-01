@@ -1,10 +1,9 @@
-# J.A.R.V.I.S
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. System - Stark Industries</title>
+    <title>J.A.R.V.I.S. AI System - Stark Industries</title>
     <style>
         * {
             box-sizing: border-box;
@@ -32,6 +31,36 @@
             z-index: 10;
         }
 
+        /* Configuración de API Key */
+        .api-container {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .api-input {
+            background: rgba(0, 15, 30, 0.8);
+            border: 1px solid #00f0ff;
+            color: #00f0ff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            outline: none;
+            font-size: 0.85rem;
+            width: 250px;
+        }
+
+        .api-button {
+            background: #00f0ff;
+            color: #030a16;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         /* Núcleo Reactivo de Jarvis */
         .arc-reactor {
             position: relative;
@@ -46,6 +75,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
+            margin-top: 40px;
         }
 
         .arc-reactor:hover {
@@ -101,109 +131,115 @@
 </head>
 <body>
 
+    <div class="api-container">
+        <input type="password" id="apiKeyInput" class="api-input" placeholder="Pega tu Gemini API Key aquí">
+        <button class="api-button" onclick="guardarApiKey()">Guardar Clave</button>
+    </div>
+
     <div class="hud-container">
-        <!-- Núcleo de Jarvis -->
         <div class="arc-reactor" id="reactor" onclick="iniciarEscucha()">
             <span class="arc-text">JARVIS</span>
         </div>
 
         <div class="status" id="estado">Haga clic en el núcleo para hablar</div>
-        <div class="console-box" id="consola">Esperando comando de voz...</div>
+        <div class="console-box" id="consola">Esperando clave de API de Gemini o comando...</div>
     </div>
 
     <script>
         const estado = document.getElementById('estado');
         const consola = document.getElementById('consola');
         const reactor = document.getElementById('reactor');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        // Cargar clave guardada
+        let geminiApiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+        if (geminiApiKey) {
+            apiKeyInput.value = geminiApiKey;
+            consola.innerText = "Sistemas listos. Conexión con IA establecida.";
+        } else {
+            consola.innerText = "Por favor, ingresa tu API Key de Gemini en la parte superior para conectar la IA.";
+        }
+
+        function guardarApiKey() {
+            geminiApiKey = apiKeyInput.value.trim();
+            localStorage.setItem('GEMINI_API_KEY', geminiApiKey);
+            alert("Clave API guardada correctamente.");
+            consola.innerText = "Sistemas listos. Conexión con IA establecida.";
+        }
 
         // Configuración del Reconocimiento de Voz
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!Recognition) {
-            estado.innerText = "Navegador no compatible";
-            consola.innerText = "Error: Tu navegador no admite el reconocimiento de voz. Usa Google Chrome.";
-        }
-
         const recognizer = new Recognition();
         recognizer.lang = 'es-ES';
         recognizer.continuous = false;
-        recognizer.interimResults = false;
 
         function iniciarEscucha() {
+            if (!geminiApiKey) {
+                alert("Primero ingresa y guarda tu API Key de Gemini en la parte superior.");
+                return;
+            }
             try {
                 recognizer.start();
                 reactor.classList.add('escuchando');
                 estado.innerText = "Escuchando...";
                 consola.innerText = "Hable ahora, señor...";
             } catch (e) {
-                console.log("Ya se está escuchando o error de inicio.");
+                console.log(e);
             }
         }
 
-        recognizer.onresult = (event) => {
+        recognizer.onresult = async (event) => {
             reactor.classList.remove('escuchando');
             const texto = event.results[0][0].transcript;
             consola.innerText = 'Tú: "' + texto + '"';
-            estado.innerText = "Procesando...";
+            estado.innerText = "Pensando (Consultando a la IA)...";
 
-            // Procesar la orden
-            procesarComando(texto.toLowerCase());
+            // Consultar a Gemini API
+            await consultarGemini(texto);
         };
 
-        recognizer.onerror = (event) => {
+        recognizer.onerror = () => {
             reactor.classList.remove('escuchando');
             estado.innerText = "Error al escuchar";
-            consola.innerText = "No se ha podido procesar el audio. Inténtelo de nuevo.";
         };
 
-        recognizer.onend = () => {
-            reactor.classList.remove('escuchando');
-        };
+        // Función para conectar con la API de Gemini
+        async function consultarGemini(pregunta) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
 
-        // Lógica de Comandos de Jarvis
-        function procesarComando(comando) {
-            let respuesta = "";
+            const promptSistema = `Eres J.A.R.V.I.S., el asistente de inteligencia artificial de Iron Man. Responde de forma muy breve (máximo 2 o 3 frases cortos), educada, formal, llamándome 'señor', y manteniendo siempre el personaje de una IA futurista de alta tecnología. Pregunta del usuario: ${pregunta}`;
 
-            if (comando.includes("hola") || comando.includes("saludos")) {
-                respuesta = "Saludos, señor. Todos los sistemas están funcionando al cien por ciento.";
-            } 
-            else if (comando.includes("quién eres") || comando.includes("quien eres") || comando.includes("tu nombre")) {
-                respuesta = "Soy Jarvis, su asistente personal con interfaz web ejecutándose directamente desde GitHub.";
-            } 
-            else if (comando.includes("hora")) {
-                const ahora = new Date();
-                const horas = ahora.getHours();
-                const minutos = ahora.getMinutes();
-                respuesta = `Son las ${horas} horas con ${minutos} minutos.`;
-            } 
-            else if (comando.includes("fecha") || comando.includes("día")) {
-                const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                const hoy = new Date().toLocaleDateString('es-ES', opciones);
-                respuesta = `Hoy es ${hoy}.`;
-            } 
-            else if (comando.includes("abrir youtube")) {
-                respuesta = "Abriendo YouTube inmediatamente.";
-                window.open("https://www.youtube.com", "_blank");
-            } 
-            else if (comando.includes("abrir google")) {
-                respuesta = "Abriendo el buscador de Google.";
-                window.open("https://www.google.com", "_blank");
-            } 
-            else if (comando.includes("estado del sistema")) {
-                respuesta = "Núcleo reactivo estable. Conexión a GitHub Pages activa. Micrófono operativo.";
-            } 
-            else {
-                respuesta = `He recibido su comando: "${comando}". No tengo una acción específica configurada para ello todavía.`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: promptSistema }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const respuesta = data.candidates[0].content.parts[0].text;
+                    consola.innerText = "Jarvis: " + respuesta;
+                    hablar(respuesta);
+                } else {
+                    estado.innerText = "Error en la respuesta";
+                    consola.innerText = "Error en el formato de respuesta de la API.";
+                }
+            } catch (error) {
+                estado.innerText = "Error de conexión";
+                consola.innerText = "Hubo un error al conectar con Gemini. Revisa tu clave API.";
             }
-
-            consola.innerText = "Jarvis: " + respuesta;
-            hablar(respuesta);
         }
 
         // Síntesis de Voz
         function hablar(texto) {
             estado.innerText = "Respondiendo...";
-            window.speechSynthesis.cancel(); // Cancelar locuciones previas
+            window.speechSynthesis.cancel();
 
             const utterance = new SpeechSynthesisUtterance(texto);
             utterance.lang = 'es-ES';
