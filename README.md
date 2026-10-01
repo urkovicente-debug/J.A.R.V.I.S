@@ -80,6 +80,7 @@
             font-size: 0.95rem;
             line-height: 1.5;
             min-height: 60px;
+            word-break: break-word;
         }
         .api-container {
             display: flex;
@@ -134,13 +135,12 @@
         const reactor = document.getElementById('reactor');
         const apiKeyInput = document.getElementById('apiKey');
 
-        // Al cargar la página, comprobar si la API Key ya está guardada en la memoria del navegador
         window.onload = () => {
             const claveGuardada = localStorage.getItem('jarvis_gemini_key');
             if (claveGuardada) {
                 apiKeyInput.value = claveGuardada;
                 estado.innerText = "Sistemas listos. Toca el núcleo para hablar";
-                consola.innerText = "Clave de API cargada automáticamente.";
+                consola.innerText = "Clave de API cargada de la memoria.";
             } else {
                 estado.innerText = "Introduce tu API Key y pulsa Guardar";
                 consola.innerText = "Esperando que configures la API Key de Gemini.";
@@ -204,43 +204,39 @@
         };
 
         async function consultarGemini(mensaje) {
-    const apiKey = apiKeyInput.value.trim();
-    
-    // URL oficial y correcta para Gemini 1.5 Flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const apiKey = apiKeyInput.value.trim();
+            
+            // Endpoint v1 estándar para Gemini 1.5 Flash
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `Eres J.A.R.V.I.S., la inteligencia artificial de Tony Stark. Responde de manera breve, educada y concisa (máximo 2 o 3 frases) como lo haría Jarvis en español. Pregunta del usuario: ${mensaje}`;
+            const prompt = `Eres J.A.R.V.I.S., la inteligencia artificial de Tony Stark. Responde de manera breve, educada y concisa (máximo 2 o 3 frases) como lo haría Jarvis en español. Pregunta del usuario: ${mensaje}`;
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
 
-        if (!response.ok) {
-            // Esto mostrará en la consola si hay un error HTTP específico
-            throw new Error(`Error HTTP: ${response.status}`);
+                const data = await response.json();
+
+                if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+                    const respuesta = data.candidates[0].content.parts[0].text;
+                    consola.innerText = "Jarvis: " + respuesta;
+                    hablar(respuesta);
+                } else {
+                    const mensajeError = data.error ? data.error.message : "Error de respuesta del servidor";
+                    estado.innerText = "Error " + response.status;
+                    consola.innerText = "Detalle del error: " + mensajeError;
+                }
+            } catch (error) {
+                estado.innerText = "Error de red";
+                consola.innerText = "No se pudo realizar la consulta HTTP.";
+            }
         }
 
-        const data = await response.json();
-
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const respuesta = data.candidates[0].content.parts[0].text;
-            consola.innerText = "Jarvis: " + respuesta;
-            hablar(respuesta);
-        } else {
-            estado.innerText = "Error en la clave o datos";
-            consola.innerText = "No se obtuvo respuesta estructurada.";
-        }
-    } catch (error) {
-        console.error("Error en la llamada:", error);
-        estado.innerText = "Error " + error.message;
-        consola.innerText = "Revisa que tu API Key sea de Google AI Studio y no de Google Cloud Platform.";
-    }
-}
         function hablar(texto) {
             estado.innerText = "Respondiendo...";
             window.speechSynthesis.cancel();
@@ -258,3 +254,4 @@
     </script>
 </body>
 </html>
+
